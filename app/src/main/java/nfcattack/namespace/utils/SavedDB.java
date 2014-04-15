@@ -1,4 +1,4 @@
-package nfcattack.namespace;
+package nfcattack.namespace.utils;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -12,7 +12,7 @@ import java.io.ObjectOutputStream;
 
 public class SavedDB extends SQLiteOpenHelper {
 
-    SavedDB(Context context){
+    public SavedDB(Context context){
         super(context, "SavedDB", null, 1);
     }
 
