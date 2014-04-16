@@ -1,11 +1,16 @@
 package nfcattack.namespace;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
+import android.os.Build;
+import android.os.PowerManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -17,6 +22,7 @@ import android.widget.CursorAdapter;
 import android.widget.ListView;
 import android.widget.TabHost;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -115,6 +121,12 @@ public class MainActivity extends ActionBarActivity {
         });
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
+
 //    @Override
 //    public boolean onCreateOptionsMenu(Menu menu) {
 //
@@ -139,19 +151,26 @@ public class MainActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
 
-//        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
-//        if (adapter != null) {
-//            IntentFilter intentFilter[] = { new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED) };
-//            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()), 0);
-//            adapter.enableForegroundDispatch(this, pendingIntent, intentFilter, new String[][] { new String[] { "android.nfc.tech.IsoPcdA" } });
-//        }
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
+        if (adapter != null) {
+            IntentFilter intentFilter[] = { new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED) };
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()), 0);
+            adapter.enableForegroundDispatch(this, pendingIntent, intentFilter, new String[][] { new String[] { "android.nfc.tech.IsoPcdA" } });
+        }
 
         Intent intent = getIntent();
+
+        try {
+            Class.forName("android.nfc.tech.IsoPcdA");
+        } catch (ClassNotFoundException e) {
+            System.out.println(e);
+        }
+
         Tag extraTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 
         if (extraTag != null) {
             if (state == State.SKIM) {
-                doReplayPCD(extraTag,  replaySession.getBundle("requests")); //, replaySession.getBundle("responses"));
+                doReplayPCD(extraTag, replaySession.getBundle("requests")); //, replaySession.getBundle("responses"));
             }
         }
     }
@@ -159,6 +178,8 @@ public class MainActivity extends ActionBarActivity {
     private void doReplayPCD(Tag tag, Bundle pcdRequests) { //, Bundle tagTransactions) {
         Bundle responses = new Bundle();
         TagTechnologyWrapper tagTech = null;
+        System.out.println(state.toString());
+
         try {
             Class[] supportedTags = new Class[] { IsoDep.class };
             String[] tech = tag.getTechList();
